@@ -1,7 +1,11 @@
 <!-- views/landing/index.ejs -->
 
 <div class="landing-hero text-center text-white d-flex align-items-center justify-content-center">
-    <div class="container">
+    <video autoplay loop muted playsinline class="background-video">
+        <source src="/assets/853870-hd_1920_1080_25fps.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div class="container position-relative z-index-1">
         <h1 class="display-3 fw-bold mb-4">Task Tracker Pro</h1>
         <p class="lead mb-5">Task Tracker Pro helps teams of all sizes plan, track, and manage their work efficiently. From small teams to enterprise organizations, our intuitive dashboard makes collaboration seamless.</p>
         <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
@@ -14,10 +18,16 @@
 <div class="py-5 bg-light">
     <div class="container text-center">
         <h2 class="display-5 fw-bold mb-5">Task Tracker Dashboard</h2>
-        <div class="dashboard-preview">
-            <!-- Placeholder for a dashboard image/screenshot -->
-            <i class="fas fa-desktop fa-5x text-muted mb-4"></i>
-            <p class="lead text-muted">A glimpse into your productive workspace.</p>
+        <div class="dashboard-preview-video-container">
+            <video autoplay loop muted playsinline class="dashboard-preview-video">
+                <source src="/assets/7279475-uhd_4096_2160_24fps.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div class="overlay-content text-white">
+                <!-- Original icon/text content can go here if still desired -->
+                
+                <p class="lead">Bringing clarity to your chaos. Track every detail, mark every success.</p>
+            </div>
         </div>
     </div>
 </div>
