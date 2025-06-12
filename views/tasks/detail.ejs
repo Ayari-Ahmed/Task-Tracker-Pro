@@ -1,0 +1,21 @@
+<% if (!task) { %>
+  <div class="alert alert-danger mt-4">Task not found.</div>
+<% } else { %>
+  <div class="container mt-4">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="card-title mb-3"><%= task.title %></h2>
+        <div class="mb-3">
+          <span class="badge bg-primary"><%= task.status.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()) %></span>
+          <span class="badge bg-info"><%= task.priority.replace(/\b\w/g, c => c.toUpperCase()) %></span>
+        </div>
+        <p><strong>Project:</strong> <%= task.project && task.project.name ? task.project.name : 'N/A' %></p>
+        <p><strong>Assigned To:</strong> <%= task.assignedTo && task.assignedTo.name ? task.assignedTo.name : 'Unassigned' %></p>
+        <p><strong>Due Date:</strong> <%= task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A' %></p>
+        <p><strong>Description:</strong></p>
+        <p><%= task.description || 'No description provided.' %></p>
+        <a href="<%= fromPage.includes('/calendar') ? '/calendar' : '/tasks' %>" class="btn btn-secondary mt-3">Back to <%= fromPage.includes('/calendar') ? 'Calendar' : 'Tasks' %></a>
+      </div>
+    </div>
+  </div>
+<% } %> 

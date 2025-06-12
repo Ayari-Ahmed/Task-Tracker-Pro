@@ -56,6 +56,11 @@
           <i class="fas fa-filter me-2"></i>Filter
         </button>
       </div>
+      <div class="col-md-auto d-flex align-items-end">
+        <button type="button" class="btn btn-outline-secondary w-100" id="initializeTasksFiltersBtn">
+          <i class="fas fa-sync-alt me-2"></i>Initialize Filters
+        </button>
+      </div>
     </form>
   </div>
 </div>
@@ -274,5 +279,14 @@ window.addEventListener('load', function() {
   document.getElementById('status').value = urlParams.get('status') || '';
   document.getElementById('priority').value = urlParams.get('priority') || '';
   document.getElementById('project').value = urlParams.get('project') || '';
+});
+
+// Initialize Filters Button for Tasks
+document.getElementById('initializeTasksFiltersBtn').addEventListener('click', () => {
+  document.getElementById('search').value = '';
+  document.getElementById('status').value = '';
+  document.getElementById('priority').value = '';
+  document.getElementById('project').value = '';
+  document.getElementById('filterForm').submit();
 });
 </script> 

@@ -147,6 +147,113 @@ exports.updateUser = async (req, res) => {
 };
 
 /**
+ * @desc    Update user profile
+ * @route   PUT /api/users/profile
+ * @access  Private
+ */
+exports.updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if new email already exists (if email is being changed)
+    if (req.body.email && req.body.email !== user.email) {
+      const emailExists = await User.findOne({ email: req.body.email });
+      if (emailExists) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email already taken'
+        });
+      }
+    }
+
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      data: user,
+      message: 'Profile updated successfully'
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    // Check for validation errors
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(val => val.message);
+      return res.status(400).json({
+        success: false,
+        message: messages.join(', ')
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: 'Server error while updating profile',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Change user password
+ * @route   PUT /api/users/password
+ * @access  Private
+ */
+exports.changePassword = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('+password'); // Explicitly select password
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    // Check current password
+    if (!(await user.matchPassword(currentPassword))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    // Set new password
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    // Check for validation errors (e.g., password length)
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(val => val.message);
+      return res.status(400).json({
+        success: false,
+        message: messages.join(', ')
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: 'Server error while changing password',
+      error: error.message
+    });
+  }
+};
+
+/**
  * @desc    Delete a user
  * @route   DELETE /api/users/:id
  * @access  Private (Admin only)

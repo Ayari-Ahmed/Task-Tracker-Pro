@@ -808,8 +808,12 @@ router.get('/tasks/:id', isAuthenticated, async (req, res) => {
     
     res.render('tasks/detail', {
       title: `${task.title} - Task Tracker Pro`,
+      layout: 'layouts/dashboard',
+      path: `/tasks/${req.params.id}`,
+      user: req.user,
       task,
-      taskStatus: TASK_STATUS
+      taskStatus: TASK_STATUS,
+      fromPage: req.headers.referer || ''
     });
   } catch (error) {
     console.error('Task detail page error:', error);
@@ -1001,80 +1005,136 @@ router.get('/error', (req, res) => {
 router.get('/calendar', isAuthenticated, async (req, res) => {
   try {
     const user = req.user;
-    let projects = [];
     let tasks = [];
-    
-    // Get projects based on user role
+    let projects = [];
+
+    // Fetch tasks based on user role
+    const taskFilter = {};
     if (user.role === ROLES.ADMIN) {
-      projects = await Project.find()
-        .populate('manager', 'name')
-        .populate('team', 'name')
+      tasks = await Task.find()
+        .populate('project', 'name')
+        .populate('assignedTo', 'name')
         .lean();
+      projects = await Project.find().lean();
     } else if (user.role === ROLES.PROJECT_MANAGER) {
-      projects = await Project.find({ manager: user._id })
-        .populate('manager', 'name')
-        .populate('team', 'name')
+      // Project managers see tasks and projects they manage or are assigned to
+      const managedProjects = await Project.find({ manager: user._id }).select('_id');
+      const managedProjectIds = managedProjects.map(p => p._id);
+
+      tasks = await Task.find({
+        $or: [
+          { assignedTo: user._id },
+          { project: { $in: managedProjectIds } }
+        ]
+      })
+        .populate('project', 'name')
+        .populate('assignedTo', 'name')
         .lean();
-    } else {
+
       projects = await Project.find({
         $or: [
           { manager: user._id },
-          { team: { $in: [user._id] } }
+          { _id: { $in: managedProjectIds } } // Include managed projects
         ]
-      })
-        .populate('manager', 'name')
-        .populate('team', 'name')
-        .lean();
-    }
+      }).lean();
 
-    // Get tasks based on user role
-    const taskFilter = {};
-    if (user.role === ROLES.ADMIN) {
-      // No filter for admin
-    } else if (user.role === ROLES.PROJECT_MANAGER) {
-      const managedProjects = await Project.find({ manager: user._id }).select('_id');
-      taskFilter.project = { $in: managedProjects.map(p => p._id) };
-    } else {
-      const userProjects = await Project.find({ 
+    } else { // Team Member
+      // Team members see tasks assigned to them and projects they are part of
+      const userProjects = await Project.find({
         $or: [
           { manager: user._id },
           { team: { $in: [user._id] } }
         ]
       }).select('_id');
-      
-      taskFilter.$or = [
-        { assignedTo: user._id },
-        { project: { $in: userProjects.map(p => p._id) } }
-      ];
+      const userProjectIds = userProjects.map(p => p._id);
+
+      tasks = await Task.find({
+        $or: [
+          { assignedTo: user._id },
+          { project: { $in: userProjectIds } }
+        ]
+      })
+        .populate('project', 'name')
+        .populate('assignedTo', 'name')
+        .lean();
+
+      projects = await Project.find({
+        $or: [
+          { manager: user._id },
+          { team: { $in: [user._id] } }
+        ]
+      }).lean();
     }
 
-    // Get all tasks for the user
-    tasks = await Task.find(taskFilter)
-      .populate('project', 'name')
-      .populate('assignedTo', 'name')
-      .lean();
+    // Format tasks and projects into FullCalendar events
+    const events = [];
+
+    // Add tasks as events
+    tasks.forEach(task => {
+      if (task.dueDate) {
+        events.push({
+          id: task._id,
+          title: `Task: ${task.title}`,
+          start: task.dueDate.toISOString().split('T')[0],
+          end: task.dueDate.toISOString().split('T')[0],
+          allDay: true,
+          backgroundColor: '#0d6efd',
+          borderColor: '#0d6efd',
+          url: `/tasks/${task._id}`,
+          extendedProps: {
+            type: 'task',
+            status: task.status,
+            priority: task.priority,
+            assignedTo: task.assignedTo ? task.assignedTo.name : 'Unassigned',
+            project: task.project ? { id: task.project._id, name: task.project.name } : null
+          }
+        });
+      }
+    });
+
+    // Add project due dates as events
+    projects.forEach(project => {
+      if (project.dueDate) {
+        events.push({
+          id: project._id,
+          title: `Project Due: ${project.name}`,
+          start: project.dueDate.toISOString().split('T')[0],
+          end: project.dueDate.toISOString().split('T')[0],
+          allDay: true,
+          backgroundColor: '#6f42c1',
+          borderColor: '#6f42c1',
+          url: `/projects/${project._id}`,
+          extendedProps: {
+            type: 'project_due',
+            status: project.status,
+            manager: project.manager ? project.manager.name : 'N/A'
+          }
+        });
+      }
+    });
 
     res.render('calendar/index', {
       title: 'Calendar - Task Tracker Pro',
       layout: 'layouts/dashboard',
       path: '/calendar',
       user: req.user,
-      projects,
-      tasks,
-      taskStatus: TASK_STATUS
+      events: JSON.stringify(events), // Pass events as a JSON string
+      projects, // Pass projects to the template
+      taskStatus: TASK_STATUS // Pass taskStatus (imported from config/config) to the template
     });
+
   } catch (error) {
-    console.error('Calendar error:', error);
+    console.error('Calendar page error:', error);
     req.flash('error', 'Error loading calendar data');
     res.render('calendar/index', {
       title: 'Calendar - Task Tracker Pro',
       layout: 'layouts/dashboard',
       path: '/calendar',
       user: req.user,
-      error: error.message,
-      projects: [],
-      tasks: [],
-      taskStatus: TASK_STATUS
+      events: '[]',
+      projects: [], // Pass an empty array in case of error
+      taskStatus: TASK_STATUS, // Pass taskStatus (imported from config/config) to the template
+      error: error.message
     });
   }
 });

@@ -48,6 +48,11 @@
           <i class="fas fa-filter me-2"></i>Filter
         </button>
       </div>
+      <div class="col-md-auto d-flex align-items-end">
+        <button type="button" class="btn btn-outline-secondary w-100" id="initializeProjectsFiltersBtn">
+          <i class="fas fa-sync-alt me-2"></i>Initialize Filters
+        </button>
+      </div>
     </form>
   </div>
 </div>
@@ -318,6 +323,14 @@ window.addEventListener('load', function() {
   document.getElementById('search').value = urlParams.get('search') || '';
   document.getElementById('status').value = urlParams.get('status') || '';
   document.getElementById('sort').value = urlParams.get('sort') || 'createdAt';
+});
+
+// Initialize Filters Button for Projects
+document.getElementById('initializeProjectsFiltersBtn').addEventListener('click', () => {
+  document.getElementById('search').value = '';
+  document.getElementById('status').value = '';
+  document.getElementById('sort').value = 'createdAt'; // Default sort value
+  document.getElementById('filterForm').submit();
 });
 
 // Form validation

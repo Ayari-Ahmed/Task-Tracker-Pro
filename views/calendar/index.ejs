@@ -63,6 +63,11 @@
           <% }); %>
         </select>
       </div>
+      <div class="col-md-auto d-flex align-items-end">
+        <button type="button" class="btn btn-outline-secondary w-100" id="initializeFiltersBtn">
+          <i class="fas fa-sync-alt me-2"></i>Initialize Filters
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -212,238 +217,212 @@
   font-weight: 500;
   padding: 0.5em 0.75em;
 }
+
+#calendar {
+  min-height: 700px;
+  height: 700px;
+}
 </style>
 
 <!-- Include FullCalendar JS -->
-<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/main.min.js'></script>
-<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/main.min.js'></script>
-<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.10/main.min.js'></script>
-<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/list@6.1.10/main.min.js'></script>
-<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.10/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/index.global.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/index.global.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.10/index.global.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/list@6.1.10/index.global.min.js'></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Initialize calendar
   const calendarEl = document.getElementById('calendar');
-  const calendar = new FullCalendar.Calendar(calendarEl, {
-    initialView: 'dayGridMonth',
-    headerToolbar: {
-      left: '',
-      center: 'title',
-      right: ''
-    },
-    buttonText: {
-      today: 'Today',
-      month: 'Month',
-      week: 'Week',
-      day: 'Day',
-      list: 'List'
-    },
-    events: function(info, successCallback, failureCallback) {
-      // Get filter values
-      const showTasks = document.getElementById('showTasks').checked;
-      const showProjects = document.getElementById('showProjects').checked;
-      const projectId = document.getElementById('projectFilter').value;
-      const status = document.getElementById('statusFilter').value;
-      
-      // Build events array
-      const events = [];
-      
-      // Add tasks
-      if (showTasks) {
-        <% if (tasks && tasks.length > 0) { %>
-          <% tasks.forEach(task => { %>
-            <% if (task.dueDate) { %>
-              if (!projectId || (projectId && '<%= task.project ? task.project._id : "" %>' === projectId)) {
-                if (!status || (status && '<%= task.status %>' === status)) {
-                  events.push({
-                    id: 'task-<%= task._id %>',
-                    title: '<%= task.title %>',
-                    start: '<%= task.dueDate %>',
-                    allDay: true,
-                    className: `fc-event-task <%= task.status %> <%= task.priority %>`,
-                    extendedProps: {
-                      type: 'task',
-                      taskId: '<%= task._id %>',
-                      description: '<%= task.description ? task.description.replace(/'/g, "\\'") : "" %>',
-                      status: '<%= task.status %>',
-                      priority: '<%= task.priority %>',
-                      project: '<%= task.project ? task.project.name : "No Project" %>',
-                      assignedTo: '<%= task.assignedTo ? task.assignedTo.name : "Unassigned" %>'
-                    }
-                  });
-                }
-              }
-            <% } %>
-          <% }); %>
-        <% } %>
-      }
-      
-      // Add projects
-      if (showProjects) {
-        <% if (projects && projects.length > 0) { %>
-          <% projects.forEach(project => { %>
-            <% if (project.dueDate) { %>
-              if (!projectId || (projectId && '<%= project._id %>' === projectId)) {
-                events.push({
-                  id: 'project-<%= project._id %>',
-                  title: '<%= project.name %> (Project)',
-                  start: '<%= project.dueDate %>',
-                  allDay: true,
-                  className: 'fc-event-project',
-                  extendedProps: {
-                    type: 'project',
-                    projectId: '<%= project._id %>',
-                    description: '<%= project.description ? project.description.replace(/'/g, "\\'") : "" %>',
-                    status: '<%= project.status %>',
-                    manager: '<%= project.manager ? project.manager.name : "Unassigned" %>',
-                    teamSize: '<%= project.team ? project.team.length : 0 %>'
-                  }
-                });
-              }
-            <% } %>
-          <% }); %>
-        <% } %>
-      }
-      
-      successCallback(events);
-    },
-    eventClick: function(info) {
-      const event = info.event;
-      const props = event.extendedProps;
-      
-      if (props.type === 'task') {
-        // Show task details
-        const taskDetails = document.getElementById('taskDetails');
-        taskDetails.innerHTML = `
-          <div class="task-detail-item">
-            <div class="task-detail-label">Title</div>
-            <div class="task-detail-value">${event.title}</div>
-          </div>
-          <div class="task-detail-item">
-            <div class="task-detail-label">Description</div>
-            <div class="task-detail-value">${props.description || 'No description'}</div>
-          </div>
-          <div class="task-detail-item">
-            <div class="task-detail-label">Status</div>
-            <div class="task-detail-value">
-              <span class="badge bg-${getStatusClass(props.status)}">
-                ${props.status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-              </span>
-            </div>
-          </div>
-          <div class="task-detail-item">
-            <div class="task-detail-label">Priority</div>
-            <div class="task-detail-value">
-              <span class="badge bg-${getPriorityClass(props.priority)}">
-                ${props.priority.charAt(0).toUpperCase() + props.priority.slice(1)}
-              </span>
-            </div>
-          </div>
-          <div class="task-detail-item">
-            <div class="task-detail-label">Project</div>
-            <div class="task-detail-value">${props.project}</div>
-          </div>
-          <div class="task-detail-item">
-            <div class="task-detail-label">Assigned To</div>
-            <div class="task-detail-value">${props.assignedTo}</div>
-          </div>
-          <div class="task-detail-item">
-            <div class="task-detail-label">Due Date</div>
-            <div class="task-detail-value">${event.start.toLocaleDateString()}</div>
-          </div>
-        `;
-        
-        document.getElementById('viewTaskBtn').href = `/tasks/${props.taskId}`;
-        const taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
-        taskModal.show();
-      } else if (props.type === 'project') {
-        // Show project details
-        const projectDetails = document.getElementById('projectDetails');
-        projectDetails.innerHTML = `
-          <div class="project-detail-item">
-            <div class="project-detail-label">Name</div>
-            <div class="project-detail-value">${event.title.replace(' (Project)', '')}</div>
-          </div>
-          <div class="project-detail-item">
-            <div class="project-detail-label">Description</div>
-            <div class="project-detail-value">${props.description || 'No description'}</div>
-          </div>
-          <div class="project-detail-item">
-            <div class="project-detail-label">Status</div>
-            <div class="project-detail-value">
-              <span class="badge bg-${getProjectStatusClass(props.status)}">
-                ${props.status.charAt(0).toUpperCase() + props.status.slice(1)}
-              </span>
-            </div>
-          </div>
-          <div class="project-detail-item">
-            <div class="project-detail-label">Manager</div>
-            <div class="project-detail-value">${props.manager}</div>
-          </div>
-          <div class="project-detail-item">
-            <div class="project-detail-label">Team Size</div>
-            <div class="project-detail-value">${props.teamSize} members</div>
-          </div>
-          <div class="project-detail-item">
-            <div class="project-detail-label">Due Date</div>
-            <div class="project-detail-value">${event.start.toLocaleDateString()}</div>
-          </div>
-        `;
-        
-        document.getElementById('viewProjectBtn').href = `/projects/${props.projectId}`;
-        const projectModal = new bootstrap.Modal(document.getElementById('projectModal'));
-        projectModal.show();
-      }
+  const calendarViewSelect = document.getElementById('calendarView');
+  const projectFilterSelect = document.getElementById('projectFilter');
+  const statusFilterSelect = document.getElementById('statusFilter');
+  const showTasksCheckbox = document.getElementById('showTasks');
+  const showProjectsCheckbox = document.getElementById('showProjects');
+  const todayBtn = document.getElementById('todayBtn');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  let allEvents = <%- events %>;
+  console.log('Calendar allEvents:', allEvents);
+
+  let calendar;
+
+  function initializeCalendar() {
+    if (calendar) {
+      calendar.destroy(); // Destroy existing calendar if it exists
     }
+
+    calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: calendarViewSelect.value || 'dayGridMonth',
+      headerToolbar: {
+        left: 'title',
+        center: '',
+        right: '' // Buttons handled separately
+      },
+      events: filterEvents(),
+      eventClassNames: function(arg) {
+        // Add custom classes based on event type and status
+        if (arg.event.extendedProps.type === 'task') {
+          return ['fc-event-task', arg.event.extendedProps.status, arg.event.extendedProps.priority];
+        } else if (arg.event.extendedProps.type === 'project_due') {
+          return ['fc-event-project'];
+        }
+        return [];
+      },
+      eventClick: function(info) {
+        if (info.event.extendedProps.type === 'task') {
+          info.jsEvent.preventDefault(); // Prevent navigation
+          showTaskDetails(info.event);
+        } else if (info.event.extendedProps.type === 'project_due') {
+          showProjectDetails(info.event);
+        }
+      }
+    });
+    calendar.render();
+  }
+
+  function filterEvents() {
+    const selectedProject = projectFilterSelect.value;
+    const selectedStatus = statusFilterSelect.value;
+    const showTasks = showTasksCheckbox.checked;
+    const showProjects = showProjectsCheckbox.checked;
+
+    return allEvents.filter(event => {
+      let matchesProject = true;
+      if (selectedProject) {
+        if (event.extendedProps.project) {
+          if (typeof event.extendedProps.project === 'object' && event.extendedProps.project.id) {
+            matchesProject = (event.extendedProps.project.id === selectedProject);
+          } else if (typeof event.extendedProps.project === 'string') {
+            matchesProject = (event.extendedProps.project === selectedProject);
+          } else if (event.extendedProps.project && event.extendedProps.project.toString) {
+            matchesProject = (event.extendedProps.project.toString() === selectedProject);
+          } else {
+            matchesProject = false;
+          }
+        } else {
+          matchesProject = false;
+        }
+      }
+
+      let matchesStatus = true;
+      if (selectedStatus && event.extendedProps.type === 'task') {
+        matchesStatus = (event.extendedProps.status === selectedStatus);
+      }
+
+      const isTask = (event.extendedProps.type === 'task');
+      const isProject = (event.extendedProps.type === 'project_due');
+
+      return (matchesProject && matchesStatus && ((showTasks && isTask) || (showProjects && isProject)));
+    });
+  }
+
+  function showTaskDetails(event) {
+    const taskDetailsEl = document.getElementById('taskDetails');
+    const viewTaskBtn = document.getElementById('viewTaskBtn');
+
+    taskDetailsEl.innerHTML = `
+      <div class="task-detail-item">
+        <div class="task-detail-label">Title:</div>
+        <div class="task-detail-value">${event.title.replace('Task: ', '')}</div>
+      </div>
+      <div class="task-detail-item">
+        <div class="task-detail-label">Project:</div>
+        <div class="task-detail-value">${event.extendedProps.project || 'N/A'}</div>
+      </div>
+      <div class="task-detail-item">
+        <div class="task-detail-label">Assigned To:</div>
+        <div class="task-detail-value">${event.extendedProps.assignedTo || 'Unassigned'}</div>
+      </div>
+      <div class="task-detail-item">
+        <div class="task-detail-label">Status:</div>
+        <div class="task-detail-value"><span class="badge bg-secondary">${event.extendedProps.status.replace('_', ' ').replace(/\b\w/g, char => char.toUpperCase())}</span></div>
+      </div>
+      <div class="task-detail-item">
+        <div class="task-detail-label">Priority:</div>
+        <div class="task-detail-value"><span class="badge bg-info">${event.extendedProps.priority.replace(/\b\w/g, char => char.toUpperCase())}</span></div>
+      </div>
+      <div class="task-detail-item">
+        <div class="task-detail-label">Due Date:</div>
+        <div class="task-detail-value">${new Date(event.start).toLocaleDateString()}</div>
+      </div>
+    `;
+    viewTaskBtn.href = event.url;
+    const taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
+    taskModal.show();
+  }
+
+  function showProjectDetails(event) {
+    const projectDetailsEl = document.getElementById('projectDetails');
+    const viewProjectBtn = document.getElementById('viewProjectBtn');
+
+    projectDetailsEl.innerHTML = `
+      <div class="project-detail-item">
+        <div class="project-detail-label">Project Name:</div>
+        <div class="project-detail-value">${event.title.replace('Project Due: ', '')}</div>
+      </div>
+      <div class="project-detail-item">
+        <div class="project-detail-label">Manager:</div>
+        <div class="project-detail-value">${event.extendedProps.manager || 'N/A'}</div>
+      </div>
+      <div class="project-detail-item">
+        <div class="project-detail-label">Status:</div>
+        <div class="project-detail-value"><span class="badge bg-secondary">${event.extendedProps.status.replace('_', ' ').replace(/\b\w/g, char => char.toUpperCase())}</span></div>
+      </div>
+      <div class="project-detail-item">
+        <div class="project-detail-label">Due Date:</div>
+        <div class="project-detail-value">${new Date(event.start).toLocaleDateString()}</div>
+      </div>
+    `;
+    viewProjectBtn.href = event.url;
+    const projectModal = new bootstrap.Modal(document.getElementById('projectModal'));
+    projectModal.show();
+  }
+
+  // Event Listeners for Filters and Navigation
+  calendarViewSelect.addEventListener('change', () => {
+    calendar.changeView(calendarViewSelect.value);
   });
-  
-  calendar.render();
-  
-  // Handle view change
-  document.getElementById('calendarView').addEventListener('change', function(e) {
-    calendar.changeView(e.target.value);
+
+  projectFilterSelect.addEventListener('change', () => {
+    calendar.setOption('events', filterEvents());
   });
-  
-  // Handle filter changes
-  document.getElementById('showTasks').addEventListener('change', () => calendar.refetchEvents());
-  document.getElementById('showProjects').addEventListener('change', () => calendar.refetchEvents());
-  document.getElementById('projectFilter').addEventListener('change', () => calendar.refetchEvents());
-  document.getElementById('statusFilter').addEventListener('change', () => calendar.refetchEvents());
-  
-  // Handle navigation buttons
-  document.getElementById('todayBtn').addEventListener('click', () => calendar.today());
-  document.getElementById('prevBtn').addEventListener('click', () => calendar.prev());
-  document.getElementById('nextBtn').addEventListener('click', () => calendar.next());
+
+  statusFilterSelect.addEventListener('change', () => {
+    calendar.setOption('events', filterEvents());
+  });
+
+  showTasksCheckbox.addEventListener('change', () => {
+    calendar.setOption('events', filterEvents());
+  });
+
+  showProjectsCheckbox.addEventListener('change', () => {
+    calendar.setOption('events', filterEvents());
+  });
+
+  todayBtn.addEventListener('click', () => {
+    calendar.today();
+  });
+
+  prevBtn.addEventListener('click', () => {
+    calendar.prev();
+  });
+
+  nextBtn.addEventListener('click', () => {
+    calendar.next();
+  });
+
+  // Initialize Filters Button
+  document.getElementById('initializeFiltersBtn').addEventListener('click', () => {
+    calendarViewSelect.value = 'dayGridMonth';
+    projectFilterSelect.value = '';
+    statusFilterSelect.value = '';
+    showTasksCheckbox.checked = true;
+    showProjectsCheckbox.checked = true;
+    initializeCalendar();
+  });
+
+  // Initialize calendar on page load
+  initializeCalendar();
 });
-
-// Helper functions for status and priority classes
-function getStatusClass(status) {
-  const classes = {
-    'todo': 'secondary',
-    'in_progress': 'primary',
-    'review': 'warning',
-    'completed': 'success'
-  };
-  return classes[status] || 'secondary';
-}
-
-function getPriorityClass(priority) {
-  const classes = {
-    'low': 'success',
-    'medium': 'info',
-    'high': 'warning',
-    'urgent': 'danger'
-  };
-  return classes[priority] || 'secondary';
-}
-
-function getProjectStatusClass(status) {
-  const classes = {
-    'active': 'success',
-    'completed': 'primary',
-    'on-hold': 'warning'
-  };
-  return classes[status] || 'secondary';
-}
-</script> 
+</script>
