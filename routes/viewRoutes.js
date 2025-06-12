@@ -79,7 +79,7 @@ router.get('/', (req, res) => {
     }
   }
   
-  res.render('home', { 
+  res.render('landing/index', { 
     title: 'Task Tracker Pro - Manage Your Projects Efficiently',
     layout: 'layouts/landing' // Use landing layout for homepage
   });
