@@ -6,7 +6,8 @@ const {
   createProject, 
   updateProject, 
   deleteProject, 
-  updateTeamMembers, 
+  addTeamMember,
+  removeTeamMember,
   getProjectStats 
 } = require('../controllers/projectController');
 const { 
@@ -39,7 +40,10 @@ router.put('/:id', projectMemberOrAdmin, updateProject);
 // Delete project (admin only)
 router.delete('/:id', adminOnly, deleteProject);
 
-// Update team members
-router.patch('/:id/team', managerOrAdmin, updateTeamMembers);
+// Add a team member to a project (project manager or admin)
+router.post('/:id/team', managerOrAdmin, addTeamMember);
+
+// Remove a team member from a project (project manager or admin)
+router.delete('/:projectId/team/:userId', managerOrAdmin, removeTeamMember);
 
 module.exports = router;

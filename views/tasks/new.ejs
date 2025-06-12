@@ -58,7 +58,7 @@
               <option value="">Select Project</option>
               <% projects.forEach(project => { %>
                 <option value="<%= project._id %>" 
-                        <%= selectedProject && selectedProject._id.toString() === project._id.toString() ? 'selected' : '' %>>
+                        <%= selectedProjectId && selectedProjectId.toString() === project._id.toString() ? 'selected' : '' %>>
                   <%= project.name %>
                 </option>
               <% }); %>
@@ -69,11 +69,9 @@
             <label for="assignedTo" class="form-label">Assign To</label>
             <select class="form-select" id="assignedTo" name="assignedTo">
               <option value="">Unassigned</option>
-              <% if (selectedProject) { %>
-                <% teamMembers.forEach(member => { %>
-                  <option value="<%= member._id %>"><%= member.name %></option>
-                <% }); %>
-              <% } %>
+              <% assignableUsers.forEach(user => { %>
+                <option value="<%= user._id %>"><%= user.name %></option>
+              <% }); %>
             </select>
           </div>
         </div>

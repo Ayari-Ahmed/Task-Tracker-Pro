@@ -243,6 +243,133 @@ exports.updateProject = async (req, res) => {
 };
 
 /**
+ * @desc    Add a team member to a project
+ * @route   POST /api/projects/:id/team
+ * @access  Private (project manager or admin)
+ */
+exports.addTeamMember = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found'
+      });
+    }
+
+    // Check if user is project manager or admin
+    const isManager = project.manager.toString() === req.user.id;
+    const isAdmin = req.user.role === ROLES.ADMIN;
+
+    if (!isManager && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to add team members to this project'
+      });
+    }
+
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if member is already in the team
+    if (project.team.includes(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'User is already a member of this project'
+      });
+    }
+
+    // Add user to the team
+    project.team.push(userId);
+    await project.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Team member added successfully',
+      data: project
+    });
+  } catch (error) {
+    console.error('Add team member error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while adding team member',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Remove a team member from a project
+ * @route   DELETE /api/projects/:projectId/team/:userId
+ * @access  Private (project manager or admin)
+ */
+exports.removeTeamMember = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found'
+      });
+    }
+
+    // Check if user is project manager or admin
+    const isManager = project.manager.toString() === req.user.id;
+    const isAdmin = req.user.role === ROLES.ADMIN;
+
+    if (!isManager && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to remove team members from this project'
+      });
+    }
+
+    const { userId } = req.params;
+
+    // Check if member is in the team
+    if (!project.team.includes(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'User is not a member of this project'
+      });
+    }
+
+    // Remove user from the team
+    project.team = project.team.filter(memberId => memberId.toString() !== userId);
+    await project.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Team member removed successfully',
+      data: project
+    });
+  } catch (error) {
+    console.error('Remove team member error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while removing team member',
+      error: error.message
+    });
+  }
+};
+
+/**
  * @desc    Delete project
  * @route   DELETE /api/projects/:id
  * @access  Private (admin only)
@@ -278,85 +405,6 @@ exports.deleteProject = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error while deleting project',
-      error: error.message
-    });
-  }
-};
-
-/**
- * @desc    Add team members to project
- * @route   PATCH /api/projects/:id/team
- * @access  Private (project manager or admin)
- */
-exports.updateTeamMembers = async (req, res) => {
-  try {
-    const { action, members } = req.body;
-    
-    if (!['add', 'remove'].includes(action) || !members || !Array.isArray(members)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide a valid action (add/remove) and members array'
-      });
-    }
-    
-    const project = await Project.findById(req.params.id);
-    
-    if (!project) {
-      return res.status(404).json({
-        success: false,
-        message: 'Project not found'
-      });
-    }
-    
-    // Check if user is project manager or admin
-    const isManager = project.manager.toString() === req.user.id;
-    const isAdmin = req.user.role === ROLES.ADMIN;
-    
-    if (!isManager && !isAdmin) {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to update this project team'
-      });
-    }
-    
-    // Validate members exist
-    const userIds = members.filter(id => mongoose.Types.ObjectId.isValid(id));
-    const validUsers = await User.find({ _id: { $in: userIds } });
-    
-    if (validUsers.length !== userIds.length) {
-      return res.status(400).json({
-        success: false,
-        message: 'One or more member IDs are invalid'
-      });
-    }
-    
-    if (action === 'add') {
-      // Add members to team without duplicates
-      const currentTeam = project.team.map(id => id.toString());
-      const newMembers = userIds.filter(id => !currentTeam.includes(id));
-      
-      if (newMembers.length > 0) {
-        project.team = [...project.team, ...newMembers];
-      }
-    } else {
-      // Remove members from team
-      project.team = project.team.filter(
-        id => !userIds.includes(id.toString())
-      );
-    }
-    
-    await project.save();
-    
-    res.status(200).json({
-      success: true,
-      data: project,
-      message: `Team members ${action === 'add' ? 'added to' : 'removed from'} project successfully`
-    });
-  } catch (error) {
-    console.error('Update team members error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while updating team members',
       error: error.message
     });
   }

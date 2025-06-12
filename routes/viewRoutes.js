@@ -102,11 +102,15 @@ router.get('/register', checkNotAuthenticated, (req, res) => {
 
 // Handle registration form submission
 router.post('/register', checkNotAuthenticated, async (req, res) => {
+  console.log('Attempting to register new user...');
   try {
-    const { name, email, password, passwordConfirm, role } = req.body;
+    const { name, email, password, confirm_password, role } = req.body;
     
+    console.log('Received registration data:', { name, email, role });
+
     // Validation
-    if (!name || !email || !password || !passwordConfirm || !role) {
+    if (!name || !email || !password || !confirm_password || !role) {
+      console.log('Validation error: Missing fields');
       return res.render('auth/register', {
         title: 'Register - Task Tracker Pro',
         layout: 'layouts/auth',
@@ -116,7 +120,8 @@ router.post('/register', checkNotAuthenticated, async (req, res) => {
       });
     }
     
-    if (password !== passwordConfirm) {
+    if (password !== confirm_password) {
+      console.log('Validation error: Passwords do not match');
       return res.render('auth/register', {
         title: 'Register - Task Tracker Pro',
         layout: 'layouts/auth',
@@ -128,6 +133,7 @@ router.post('/register', checkNotAuthenticated, async (req, res) => {
 
     // Validate role: only 'team_member' and 'project_manager' allowed for public registration
     if (![ROLES.TEAM_MEMBER, ROLES.PROJECT_MANAGER].includes(role)) {
+        console.log('Validation error: Invalid account type selected');
         return res.render('auth/register', {
             title: 'Register - Task Tracker Pro',
             layout: 'layouts/auth',
@@ -138,8 +144,10 @@ router.post('/register', checkNotAuthenticated, async (req, res) => {
     }
     
     // Check if user already exists
+    console.log('Checking if user exists...');
     const userExists = await User.findOne({ email });
     if (userExists) {
+      console.log('Validation error: User with this email already exists');
       return res.render('auth/register', {
         title: 'Register - Task Tracker Pro',
         layout: 'layouts/auth',
@@ -150,6 +158,7 @@ router.post('/register', checkNotAuthenticated, async (req, res) => {
     }
     
     // Create user with selected role
+    console.log('Creating user...');
     const user = await User.create({
       name,
       email,
@@ -157,10 +166,14 @@ router.post('/register', checkNotAuthenticated, async (req, res) => {
       role // Use the selected role
     });
     
+    console.log('User created successfully:', user.email);
+
     // Generate token
+    console.log('Generating token...');
     const token = generateToken(user);
     
     // Set cookie
+    console.log('Setting cookie and redirecting...');
     res.cookie('token', token, {
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
@@ -168,11 +181,10 @@ router.post('/register', checkNotAuthenticated, async (req, res) => {
     });
     
     // Redirect to dashboard with success message
-    // Success message needs to be handled directly in the view now or removed if not desired
     res.redirect('/dashboard');
     
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration error (caught):', error);
     res.render('auth/register', {
       title: 'Register - Task Tracker Pro',
       layout: 'layouts/auth',
@@ -739,38 +751,11 @@ router.get('/tasks/new', isAuthenticated, async (req, res) => {
         ]
       }).sort('name');
     }
-    
-    // If projectId is specified, verify user has access
-    let teamMembers = [];
-    let selectedProject = null;
-    
-    if (projectId) {
-      selectedProject = await Project.findById(projectId)
-        .populate('manager', 'name')
-        .populate('team', 'name');
-        
-      if (!selectedProject) {
-        req.flash('error', 'Project not found');
-        return res.redirect('/tasks/new');
-      }
-      
-      // Check user access to this project
-      if (user.role !== ROLES.ADMIN) {
-        const isManager = selectedProject.manager._id.toString() === user._id.toString();
-        const isTeamMember = selectedProject.team.some(m => m._id.toString() === user._id.toString());
-        
-        if (!isManager && !isTeamMember) {
-          req.flash('error', 'You do not have access to this project');
-          return res.redirect('/tasks/new');
-        }
-      }
-      
-      // Get team members for this project for assignment dropdown
-      teamMembers = [
-        { _id: selectedProject.manager._id, name: selectedProject.manager.name },
-        ...selectedProject.team
-      ];
-    }
+
+    // Get assignable users (team members and project managers)
+    const assignableUsers = await User.find({
+      role: { $in: [ROLES.TEAM_MEMBER, ROLES.PROJECT_MANAGER, ROLES.ADMIN] } // Include admins as they can assign tasks to themselves or others
+    }).select('name').sort('name');
     
     res.render('tasks/new', {
       title: 'Create Task - Task Tracker Pro',
@@ -778,13 +763,12 @@ router.get('/tasks/new', isAuthenticated, async (req, res) => {
       path: '/tasks/new',
       user: req.user,
       projects,
-      selectedProject,
-      teamMembers,
-      taskStatus: TASK_STATUS
+      selectedProjectId: projectId || '',
+      assignableUsers // Pass assignable users to the view
     });
   } catch (error) {
     console.error('New task page error:', error);
-    req.flash('error', 'Error loading form data');
+    req.flash('error', 'Error loading task creation form');
     res.redirect('/tasks');
   }
 });
