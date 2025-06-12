@@ -1,0 +1,306 @@
+<!-- Profile Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-0">Profile</h1>
+    <p class="text-muted">Manage your account information and preferences</p>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Profile Information -->
+  <div class="col-md-4">
+    <div class="card mb-4">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <% if (user.profilePicture) { %>
+            <img src="<%= user.profilePicture %>" alt="Profile Picture" class="rounded-circle img-fluid" style="width: 150px; height: 150px; object-fit: cover;">
+          <% } else { %>
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px; font-size: 3rem;">
+              <%= user.name.charAt(0).toUpperCase() %>
+            </div>
+          <% } %>
+        </div>
+        <h5 class="card-title mb-1"><%= user.name %></h5>
+        <p class="text-muted mb-3"><%= user.email %></p>
+        <div class="d-flex justify-content-center gap-2">
+          <span class="badge bg-primary"><%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %></span>
+          <% if (user.department) { %>
+            <span class="badge bg-secondary"><%= user.department %></span>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Stats -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Account Stats</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-3">
+          <div>
+            <h6 class="mb-0">Member Since</h6>
+            <small class="text-muted"><%= new Date(user.createdAt).toLocaleDateString() %></small>
+          </div>
+          <div class="text-end">
+            <h6 class="mb-0">Last Login</h6>
+            <small class="text-muted"><%= user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'N/A' %></small>
+          </div>
+        </div>
+        <hr>
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="mb-0">Projects</h6>
+            <small class="text-muted"><%= stats.projects || 0 %> total</small>
+          </div>
+          <div class="text-end">
+            <h6 class="mb-0">Tasks</h6>
+            <small class="text-muted"><%= stats.tasks || 0 %> total</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Settings -->
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab">
+              Profile
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab">
+              Security
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="preferences-tab" data-bs-toggle="tab" data-bs-target="#preferences" type="button" role="tab">
+              Preferences
+            </button>
+          </li>
+        </ul>
+      </div>
+      <div class="card-body">
+        <div class="tab-content">
+          <!-- Profile Tab -->
+          <div class="tab-pane fade show active" id="profile" role="tabpanel">
+            <form action="/profile" method="POST" enctype="multipart/form-data">
+              <input type="hidden" name="_method" value="PUT">
+              
+              <div class="mb-3">
+                <label class="form-label">Profile Picture</label>
+                <input type="file" class="form-control" name="profilePicture" accept="image/*">
+                <small class="text-muted">Max file size: 2MB. Supported formats: JPG, PNG, GIF</small>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Name</label>
+                  <input type="text" class="form-control" name="name" value="<%= user.name %>" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Email</label>
+                  <input type="email" class="form-control" value="<%= user.email %>" disabled>
+                  <small class="text-muted">Email cannot be changed</small>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Department</label>
+                  <input type="text" class="form-control" name="department" value="<%= user.department || '' %>">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Role</label>
+                  <input type="text" class="form-control" value="<%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>" disabled>
+                  <small class="text-muted">Role cannot be changed</small>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Bio</label>
+                <textarea class="form-control" name="bio" rows="3"><%= user.bio || '' %></textarea>
+              </div>
+
+              <div class="text-end">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Security Tab -->
+          <div class="tab-pane fade" id="security" role="tabpanel">
+            <form action="/profile/password" method="POST">
+              <input type="hidden" name="_method" value="PUT">
+              
+              <div class="mb-3">
+                <label class="form-label">Current Password</label>
+                <input type="password" class="form-control" name="currentPassword" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">New Password</label>
+                <input type="password" class="form-control" name="newPassword" required>
+                <small class="text-muted">Password must be at least 8 characters long</small>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Confirm New Password</label>
+                <input type="password" class="form-control" name="confirmPassword" required>
+              </div>
+
+              <div class="text-end">
+                <button type="submit" class="btn btn-primary">Update Password</button>
+              </div>
+            </form>
+
+            <hr class="my-4">
+
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="mb-1">Two-Factor Authentication</h6>
+                <p class="text-muted mb-0">Add an extra layer of security to your account</p>
+              </div>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="twoFactorEnabled" <%= user.twoFactorEnabled ? 'checked' : '' %>>
+                <label class="form-check-label" for="twoFactorEnabled">Enable 2FA</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preferences Tab -->
+          <div class="tab-pane fade" id="preferences" role="tabpanel">
+            <form action="/profile/preferences" method="POST">
+              <input type="hidden" name="_method" value="PUT">
+              
+              <div class="mb-3">
+                <label class="form-label">Email Notifications</label>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="notifications[taskAssigned]" id="notifyTaskAssigned" <%= user.preferences?.notifications?.taskAssigned ? 'checked' : '' %>>
+                  <label class="form-check-label" for="notifyTaskAssigned">
+                    When assigned to a task
+                  </label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="notifications[taskUpdated]" id="notifyTaskUpdated" <%= user.preferences?.notifications?.taskUpdated ? 'checked' : '' %>>
+                  <label class="form-check-label" for="notifyTaskUpdated">
+                    When a task is updated
+                  </label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="notifications[taskDue]" id="notifyTaskDue" <%= user.preferences?.notifications?.taskDue ? 'checked' : '' %>>
+                  <label class="form-check-label" for="notifyTaskDue">
+                    Task due date reminders
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="notifications[projectUpdates]" id="notifyProjectUpdates" <%= user.preferences?.notifications?.projectUpdates ? 'checked' : '' %>>
+                  <label class="form-check-label" for="notifyProjectUpdates">
+                    Project updates and announcements
+                  </label>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Default Calendar View</label>
+                <select class="form-select" name="preferences[defaultCalendarView]">
+                  <option value="month" <%= user.preferences?.defaultCalendarView === 'month' ? 'selected' : '' %>>Month</option>
+                  <option value="week" <%= user.preferences?.defaultCalendarView === 'week' ? 'selected' : '' %>>Week</option>
+                  <option value="day" <%= user.preferences?.defaultCalendarView === 'day' ? 'selected' : '' %>>Day</option>
+                  <option value="list" <%= user.preferences?.defaultCalendarView === 'list' ? 'selected' : '' %>>List</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Theme</label>
+                <select class="form-select" name="preferences[theme]">
+                  <option value="light" <%= user.preferences?.theme === 'light' ? 'selected' : '' %>>Light</option>
+                  <option value="dark" <%= user.preferences?.theme === 'dark' ? 'selected' : '' %>>Dark</option>
+                  <option value="system" <%= user.preferences?.theme === 'system' ? 'selected' : '' %>>System Default</option>
+                </select>
+              </div>
+
+              <div class="text-end">
+                <button type="submit" class="btn btn-primary">Save Preferences</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.nav-tabs .nav-link {
+  color: #6c757d;
+  border: none;
+  padding: 0.75rem 1rem;
+}
+
+.nav-tabs .nav-link:hover {
+  color: #0d6efd;
+  border: none;
+}
+
+.nav-tabs .nav-link.active {
+  color: #0d6efd;
+  border: none;
+  border-bottom: 2px solid #0d6efd;
+  background: none;
+}
+
+.form-check-input:checked {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.form-check-input:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.form-switch .form-check-input {
+  width: 3em;
+}
+
+.form-switch .form-check-input:checked {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+}
+
+.form-switch .form-check-input:focus {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Handle two-factor authentication toggle
+  const twoFactorToggle = document.getElementById('twoFactorEnabled');
+  if (twoFactorToggle) {
+    twoFactorToggle.addEventListener('change', function() {
+      // Here you would typically make an API call to enable/disable 2FA
+      // For now, we'll just show a message
+      const action = this.checked ? 'enable' : 'disable';
+      alert(`Two-factor authentication will be ${action}d. This feature is not yet implemented.`);
+      this.checked = !this.checked; // Revert the change
+    });
+  }
+
+  // Handle form submissions
+  const forms = document.querySelectorAll('form');
+  forms.forEach(form => {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Here you would typically make an API call to update the profile
+      // For now, we'll just show a message
+      alert('Profile update functionality is not yet implemented.');
+    });
+  });
+});
+</script> 

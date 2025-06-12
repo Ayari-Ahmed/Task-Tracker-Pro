@@ -1,0 +1,213 @@
+<!-- Task Creation Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-0">Create New Task</h1>
+    <p class="text-muted">Add a new task to a project</p>
+  </div>
+  <a href="/tasks" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-2"></i>Back to Tasks
+  </a>
+</div>
+
+<!-- Task Creation Form -->
+<div class="card">
+  <div class="card-body">
+    <form action="/tasks" method="POST" class="needs-validation" novalidate>
+      <!-- Hidden fields -->
+      <input type="hidden" name="createdBy" value="<%= user._id %>">
+      
+      <!-- Basic Information -->
+      <div class="mb-4">
+        <h5 class="card-title mb-3">Basic Information</h5>
+        <div class="row g-3">
+          <div class="col-md-8">
+            <label for="title" class="form-label">Task Title</label>
+            <input type="text" class="form-control" id="title" name="title" required 
+                   minlength="3" maxlength="100"
+                   pattern="[A-Za-z0-9\s\-_]+"
+                   title="Task title can only contain letters, numbers, spaces, hyphens, and underscores">
+            <div class="invalid-feedback">Please enter a valid task title (3-100 characters)</div>
+          </div>
+          <div class="col-md-4">
+            <label for="priority" class="form-label">Priority</label>
+            <select class="form-select" id="priority" name="priority" required>
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+            <div class="invalid-feedback">Please select a priority level</div>
+          </div>
+        </div>
+        <div class="mt-3">
+          <label for="description" class="form-label">Description</label>
+          <textarea class="form-control" id="description" name="description" rows="4" required
+                    minlength="10" maxlength="1000"
+                    placeholder="Describe the task requirements, objectives, and any other relevant details..."></textarea>
+          <div class="invalid-feedback">Please enter a task description (10-1000 characters)</div>
+        </div>
+      </div>
+
+      <!-- Project and Assignment -->
+      <div class="mb-4">
+        <h5 class="card-title mb-3">Project and Assignment</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="project" class="form-label">Project</label>
+            <select class="form-select" id="project" name="project" required>
+              <option value="">Select Project</option>
+              <% projects.forEach(project => { %>
+                <option value="<%= project._id %>" 
+                        <%= selectedProject && selectedProject._id.toString() === project._id.toString() ? 'selected' : '' %>>
+                  <%= project.name %>
+                </option>
+              <% }); %>
+            </select>
+            <div class="invalid-feedback">Please select a project</div>
+          </div>
+          <div class="col-md-6">
+            <label for="assignedTo" class="form-label">Assign To</label>
+            <select class="form-select" id="assignedTo" name="assignedTo">
+              <option value="">Unassigned</option>
+              <% if (selectedProject) { %>
+                <% teamMembers.forEach(member => { %>
+                  <option value="<%= member._id %>"><%= member.name %></option>
+                <% }); %>
+              <% } %>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="mb-4">
+        <h5 class="card-title mb-3">Timeline</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="dueDate" class="form-label">Due Date</label>
+            <input type="date" class="form-control" id="dueDate" name="dueDate">
+            <div class="invalid-feedback">Please select a valid due date</div>
+          </div>
+          <div class="col-md-6">
+            <label for="estimatedHours" class="form-label">Estimated Hours</label>
+            <input type="number" class="form-control" id="estimatedHours" name="estimatedHours" 
+                   min="0" step="0.5" placeholder="e.g., 2.5">
+            <div class="invalid-feedback">Please enter a valid number of hours</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="mb-4">
+        <h5 class="card-title mb-3">Status</h5>
+        <div class="mb-3">
+          <label for="status" class="form-label">Current Status</label>
+          <select class="form-select" id="status" name="status" required>
+            <option value="to_do">To Do</option>
+            <option value="in_progress">In Progress</option>
+            <option value="review">Review</option>
+            <option value="completed">Completed</option>
+          </select>
+          <div class="invalid-feedback">Please select a status</div>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="d-flex justify-content-end gap-2">
+        <a href="/tasks" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-plus me-2"></i>Create Task
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Form validation and dynamic behavior
+(function() {
+    'use strict';
+    
+    const form = document.querySelector('form');
+    const projectSelect = document.getElementById('project');
+    const assignedToSelect = document.getElementById('assignedTo');
+    const dueDateInput = document.getElementById('dueDate');
+    
+    // Set min date for due date to today
+    const today = new Date().toISOString().split('T')[0];
+    dueDateInput.min = today;
+    
+    // Handle project selection change
+    projectSelect.addEventListener('change', async () => {
+        const projectId = projectSelect.value;
+        if (projectId) {
+            try {
+                // Fetch team members for selected project
+                const response = await fetch(`/api/projects/${projectId}/team`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update assigned to dropdown
+                    assignedToSelect.innerHTML = '<option value="">Unassigned</option>';
+                    data.data.forEach(member => {
+                        const option = document.createElement('option');
+                        option.value = member._id;
+                        option.textContent = member.name;
+                        assignedToSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching team members:', error);
+            }
+        } else {
+            // Clear assigned to dropdown if no project selected
+            assignedToSelect.innerHTML = '<option value="">Unassigned</option>';
+        }
+    });
+    
+    // Form submission handler
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        
+        // Reset validation state
+        form.classList.remove('was-validated');
+        
+        // Validate form
+        if (!form.checkValidity()) {
+            event.stopPropagation();
+            form.classList.add('was-validated');
+            return;
+        }
+        
+        try {
+            // Disable submit button
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
+            
+            // Submit the form
+            form.submit();
+        } catch (error) {
+            console.error('Form submission error:', error);
+            alert('Error creating task. Please try again.');
+            
+            // Re-enable submit button
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-plus me-2"></i>Create Task';
+        }
+    });
+})();
+</script>
+
+<style>
+.form-label {
+    font-weight: 500;
+}
+.card-title {
+    color: #495057;
+}
+.invalid-feedback {
+    font-size: 0.875rem;
+}
+</style> 

@@ -1,0 +1,146 @@
+/* Auth Pages Styling */
+
+body {
+  background-color: #f8fafc;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.card {
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.card-header {
+  background-color: transparent;
+  border-bottom: none;
+  padding: 1.5rem 1.5rem 0.5rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.form-label {
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.form-control {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s;
+}
+
+.form-control:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.input-group-text {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+}
+
+.btn-primary {
+  background-color: #4f46e5;
+  border-color: #4f46e5;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #3730a3;
+  border-color: #3730a3;
+  transform: translateY(-1px);
+}
+
+.btn-outline-secondary {
+  border-color: #e5e7eb;
+  color: #6b7280;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.form-check-input:checked {
+  background-color: #4f46e5;
+  border-color: #4f46e5;
+}
+
+.form-text {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.alert {
+  border-radius: 0.5rem;
+  border: none;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.alert-success {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.alert-danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.alert-warning {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.text-primary {
+  color: #4f46e5 !important;
+}
+
+.text-muted {
+  color: #6b7280 !important;
+}
+
+/* Logo styling */
+.fa-tasks {
+  color: #4f46e5;
+}
+
+/* Auth Footer Styling */
+.auth-footer {
+    width: 100%;
+    padding: 1rem 0;
+    background-color: #f8fafc;
+    color: #6b7280;
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+  
+  .card-body {
+    padding: 1.25rem;
+  }
+} 

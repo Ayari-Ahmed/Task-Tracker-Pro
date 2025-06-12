@@ -1,0 +1,198 @@
+<!-- views/projects/detail.ejs -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">Project: <%= project.name %></h1>
+        <p class="text-muted mb-0">Details, tasks, and team members</p>
+    </div>
+    <div class="btn-group">
+        <% if (user.role === 'admin' || (user.role === 'project_manager' && project.manager.toString() === user._id.toString())) { %>
+        <a href="/projects/<%= project._id %>/edit" class="btn btn-outline-secondary">
+            <i class="fas fa-edit me-2"></i>Edit Project
+        </a>
+        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteProjectModal">
+            <i class="fas fa-trash me-2"></i>Delete Project
+        </button>
+        <% } %>
+        <a href="/projects" class="btn btn-outline-primary ms-2">
+            <i class="fas fa-arrow-left me-2"></i>Back to Projects
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Project Details Card -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Project Overview</h5>
+                <span class="badge bg-<%= project.status === 'active' ? 'success' : project.status === 'completed' ? 'primary' : 'secondary' %>">
+                    <%= project.status.replace('_', ' ').replace(/\b\w/g, char => char.toUpperCase()) %>
+                </span>
+            </div>
+            <div class="card-body">
+                <p><strong>Description:</strong> <%= project.description %></p>
+                <p><strong>Manager:</strong> <%= project.manager ? project.manager.name : 'N/A' %></p>
+                <p><strong>Start Date:</strong> <%= project.startDate ? new Date(project.startDate).toLocaleDateString() : 'N/A' %></p>
+                <p><strong>Due Date:</strong> <%= project.dueDate ? new Date(project.dueDate).toLocaleDateString() : 'N/A' %></p>
+                <p><strong>Category:</strong> <%= project.category || 'N/A' %></p>
+                <p><strong>Created:</strong> <%= new Date(project.createdAt).toLocaleDateString() %></p>
+                <p><strong>Last Updated:</strong> <%= new Date(project.updatedAt).toLocaleDateString() %></p>
+
+                <h6 class="mt-4">Progress:</h6>
+                <div class="progress" style="height: 25px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: <%= project.progress || 0 %>%;" aria-valuenow="<%= project.progress || 0 %>" aria-valuemin="0" aria-valuemax="100">
+                        <%= project.progress || 0 %>%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Members Card -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Team Members</h5>
+            </div>
+            <div class="card-body">
+                <% if (project.team && project.team.length > 0) { %>
+                <ul class="list-unstyled mb-0">
+                    <% project.team.forEach(member => { %>
+                    <li class="d-flex align-items-center mb-2">
+                        <img src="https://ui-avatars.com/api/?name=<%= member.name %>&background=random&color=fff" alt="<%= member.name %>" class="rounded-circle me-2" width="32" height="32">
+                        <%= member.name %> (<%= member.role.replace('_', ' ').replace(/\b\w/g, char => char.toUpperCase()) %>)
+                    </li>
+                    <% }); %>
+                </ul>
+                <% } else { %>
+                <p class="text-muted">No team members assigned yet.</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tasks Section -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Tasks (<%= project.tasks ? project.tasks.length : 0 %>)</h5>
+        <% if (user.role === 'admin' || user.role === 'project_manager' || (user.role === 'team_member' && project.team.some(member => member._id.toString() === user._id.toString()))) { %>
+        <a href="/tasks/new?projectId=<%= project._id %>" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-2"></i>Add Task
+        </a>
+        <% } %>
+    </div>
+    <div class="card-body p-0">
+        <% if (project.tasks && project.tasks.length > 0) { %>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Title</th>
+                        <th>Assigned To</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% project.tasks.forEach(task => { %>
+                    <tr>
+                        <td><%= task.title %></td>
+                        <td><%= task.assignedTo ? task.assignedTo.name : 'Unassigned' %></td>
+                        <td><%= task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A' %></td>
+                        <td><span class="badge bg-secondary"><%= task.status.replace('_', ' ').replace(/\b\w/g, char => char.toUpperCase()) %></span></td>
+                        <td><span class="badge bg-info"><%= task.priority.replace(/\b\w/g, char => char.toUpperCase()) %></span></td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="/tasks/<%= task._id %>" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a>
+                                <% if (user.role === 'admin' || (user.role === 'project_manager' && project.manager.toString() === user._id.toString()) || (user.role === 'team_member' && task.assignedTo && task.assignedTo.toString() === user._id.toString())) { %>
+                                <a href="/tasks/<%= task._id %>/edit" class="btn btn-sm btn-outline-secondary"><i class="fas fa-edit"></i></a>
+                                <% } %>
+                            </div>
+                        </td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+        <% } else { %>
+        <div class="text-center py-5">
+            <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+            <h5>No Tasks Yet</h5>
+            <p class="text-muted">This project currently has no tasks.</p>
+            <% if (user.role === 'admin' || user.role === 'project_manager' || (user.role === 'team_member' && project.team.some(member => member._id.toString() === user._id.toString()))) { %>
+            <a href="/tasks/new?projectId=<%= project._id %>" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Add New Task
+            </a>
+            <% } %>
+        </div>
+        <% } %>
+    </div>
+</div>
+
+<!-- Delete Project Modal -->
+<div class="modal fade" id="deleteProjectModal" tabindex="-1" aria-labelledby="deleteProjectModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteProjectModalLabel">Delete Project</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete this project? This action cannot be undone and will also delete all associated tasks.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDelete">
+          <i class="fas fa-trash-alt me-2"></i>Delete Project
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const deleteModal = document.getElementById('deleteProjectModal');
+  const confirmDeleteBtn = document.getElementById('confirmDelete');
+  
+  if (confirmDeleteBtn) {
+    confirmDeleteBtn.addEventListener('click', async function() {
+      try {
+        // Disable the button and show loading state
+        confirmDeleteBtn.disabled = true;
+        confirmDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Deleting...';
+        
+        const response = await fetch(`/projects/<%= project._id %>?_method=DELETE`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // Show success message and redirect
+          window.location.href = '/projects';
+        } else {
+          throw new Error(result.error || 'Failed to delete project');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error deleting project: ' + error.message);
+        
+        // Reset button state
+        confirmDeleteBtn.disabled = false;
+        confirmDeleteBtn.innerHTML = '<i class="fas fa-trash-alt me-2"></i>Delete Project';
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(deleteModal);
+        modal.hide();
+      }
+    });
+  }
+});
+</script> 

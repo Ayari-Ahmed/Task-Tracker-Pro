@@ -1,0 +1,45 @@
+<!-- views/partials/header.ejs -->
+<header class="navbar navbar-expand-md navbar-dark sticky-top bg-primary p-0 shadow">
+    <div class="container-fluid">
+        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 py-2" href="/">
+            <i class="fas fa-tasks me-2"></i>Task Tracker Pro
+        </a>
+        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarTop">
+            <% if(locals.user) { %>
+                <!-- Search form -->
+                <form class="d-flex ms-auto me-3">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search..." aria-label="Search">
+                        <button class="btn btn-light" type="submit"><i class="fas fa-search"></i></button>
+                    </div>
+                </form>
+                
+                <!-- User dropdown -->
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="https://via.placeholder.com/32" alt="User" width="32" height="32" class="rounded-circle me-2">
+                        <span class="d-none d-md-inline"><%= user.name %></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="dropdownUser">
+                        <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i> Profile</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form action="/api/auth/logout" method="GET" class="logout-form">
+                                <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i> Sign out</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            <% } else { %>
+                <div class="ms-auto">
+                    <a href="/login" class="btn btn-outline-light me-2">Login</a>
+                    <a href="/register" class="btn btn-light">Register</a>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</header>

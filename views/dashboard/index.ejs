@@ -1,0 +1,432 @@
+<!-- Dashboard Header -->
+<div class="dashboard-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 mb-1">Welcome, <%= user.name %></h1>
+            <p class="text-muted mb-0">Here's an overview of your projects and tasks</p>
+        </div>
+        <div>
+            <!-- Quick Actions -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="d-flex gap-2">
+                        <% if (user.role === 'admin' || user.role === 'project_manager') { %>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newProjectModal">
+                                <i class="fas fa-plus me-2"></i>New Project
+                            </button>
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#newTaskModal">
+                                <i class="fas fa-tasks me-2"></i>New Task
+                            </button>
+                        <% } else { %>
+                            <a href="/tasks/new" class="btn btn-success">
+                                <i class="fas fa-tasks me-2"></i>New Task
+                            </a>
+                        <% } %>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-md-end gap-2">
+                        <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='/calendar'">
+                            <i class="fas fa-calendar me-2"></i>View Calendar
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='/tasks'">
+                            <i class="fas fa-list me-2"></i>View All Tasks
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-subtitle text-muted mb-1">Active Projects</h6>
+                        <h3 class="card-title mb-0"><%= projects ? projects.length : 0 %></h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stats-icon bg-success bg-opacity-10 text-success">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-subtitle text-muted mb-1">Completed Tasks</h6>
+                        <h3 class="card-title mb-0"><%= completedTasks ? completedTasks.length : 0 %></h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="stats-icon bg-warning bg-opacity-10 text-warning">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-subtitle text-muted mb-1">Pending Tasks</h6>
+                        <h3 class="card-title mb-0"><%= pendingTasks ? pendingTasks.length : 0 %></h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Projects Section -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Your Projects</h5>
+            <a href="/projects" class="btn btn-link text-primary">View All</a>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <% if (projects && projects.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Project Name</th>
+                            <th>Progress</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% projects.slice(0, 5).forEach(project => { %>
+                            <tr>
+                                <td>
+                                    <a href="/projects/<%= project._id %>" class="text-decoration-none">
+                                        <%= project.name %>
+                                    </a>
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 6px; width: 100px;">
+                                        <div class="progress-bar" role="progressbar" 
+                                             style="width: <%= project.progress || 0 %>%;" 
+                                             aria-valuenow="<%= project.progress || 0 %>" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><%= new Date(project.dueDate).toLocaleDateString() %></td>
+                                <td>
+                                    <span class="badge bg-<%= project.status === 'active' ? 'success' : 
+                                                          project.status === 'on-hold' ? 'warning' : 
+                                                          project.status === 'completed' ? 'info' : 'secondary' %>">
+                                        <%= project.status.charAt(0).toUpperCase() + project.status.slice(1) %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="/projects/<%= project._id %>" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="/projects/<%= project._id %>/edit" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <div class="text-center py-5">
+                <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
+                <h5>No Projects Yet</h5>
+                <p class="text-muted">Get started by creating your first project</p>
+                <% if (user.role === 'admin' || user.role === 'project_manager') { %>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newProjectModal">
+                        <i class="fas fa-plus me-2"></i>Create Project
+                    </button>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<!-- Recent Tasks Section -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent border-0 py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Recent Tasks</h5>
+            <a href="/tasks" class="btn btn-link text-primary">View All</a>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <% if (tasks && tasks.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Task</th>
+                            <th>Project</th>
+                            <th>Due Date</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% tasks.slice(0, 5).forEach(task => { %>
+                            <tr>
+                                <td>
+                                    <a href="/tasks/<%= task._id %>" class="text-decoration-none">
+                                        <%= task.title %>
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="/projects/<%= task.project %>" class="text-decoration-none">
+                                        <%= task.projectName %>
+                                    </a>
+                                </td>
+                                <td><%= new Date(task.dueDate).toLocaleDateString() %></td>
+                                <td>
+                                    <span class="badge bg-<%= task.priority === 'high' ? 'danger' : 
+                                                          task.priority === 'medium' ? 'warning' : 'info' %>">
+                                        <%= task.priority.charAt(0).toUpperCase() + task.priority.slice(1) %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-<%= task.status === 'completed' ? 'success' : 
+                                                          task.status === 'in-progress' ? 'primary' : 
+                                                          task.status === 'pending' ? 'warning' : 'secondary' %>">
+                                        <%= task.status.charAt(0).toUpperCase() + task.status.slice(1) %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="/tasks/<%= task._id %>" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="/tasks/<%= task._id %>/edit" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <div class="text-center py-5">
+                <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                <h5>No Tasks Yet</h5>
+                <p class="text-muted">Create a project to start adding tasks</p>
+                <% if (user.role === 'admin' || user.role === 'project_manager') { %>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newProjectModal">
+                        <i class="fas fa-plus me-2"></i>Create Project
+                    </button>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<!-- Project Creation Modal - Only show for admins and project managers -->
+<% if (user.role === 'admin' || user.role === 'project_manager') { %>
+<div class="modal fade" id="newProjectModal" tabindex="-1" aria-labelledby="newProjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newProjectModalLabel">Create New Project</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/projects" method="POST" class="needs-validation" novalidate>
+                <!-- Hidden fields -->
+                <input type="hidden" name="manager" value="<%= user._id %>">
+                
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="projectName" class="form-label">Project Name</label>
+                        <input type="text" class="form-control" id="projectName" name="name" required 
+                               minlength="3" maxlength="100" 
+                               pattern="[A-Za-z0-9\s\-_]+" 
+                               title="Project name can only contain letters, numbers, spaces, hyphens, and underscores">
+                        <div class="invalid-feedback">Please enter a valid project name (3-100 characters)</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="projectDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="projectDescription" name="description" 
+                                  rows="3" required minlength="10" maxlength="500"
+                                  placeholder="Describe the project goals, scope, and objectives..."></textarea>
+                        <div class="invalid-feedback">Please enter a project description (10-500 characters)</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="projectStartDate" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="projectStartDate" name="startDate" 
+                               required min="<%= new Date().toISOString().split('T')[0] %>">
+                        <div class="invalid-feedback">Please select a valid start date</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="projectDueDate" class="form-label">Due Date</label>
+                        <input type="date" class="form-control" id="projectDueDate" name="dueDate">
+                        <div class="invalid-feedback">Please select a valid due date</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="projectStatus" class="form-label">Status</label>
+                        <select class="form-select" id="projectStatus" name="status" required>
+                            <option value="planning">Planning</option>
+                            <option value="active">Active</option>
+                            <option value="on_hold">On Hold</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <div class="invalid-feedback">Please select a status</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create Project
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<% } else { %>
+<script>
+// Show message only when trying to create a project
+document.addEventListener('DOMContentLoaded', function() {
+    // Intercept any clicks on project creation links/buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('[href*="/projects/new"]') || e.target.closest('[data-bs-target="#newProjectModal"]')) {
+            e.preventDefault();
+            alert('As a team member, you can view and work on assigned projects and tasks. Please contact your project manager to create new projects.');
+        }
+    });
+});
+</script>
+<% } %>
+
+<script>
+// Form validation
+(function() {
+    'use strict';
+    
+    // Get the form and all inputs
+    const form = document.querySelector('#newProjectModal form');
+    const nameInput = document.getElementById('projectName');
+    const descriptionInput = document.getElementById('projectDescription');
+    const startDateInput = document.getElementById('projectStartDate');
+    const dueDateInput = document.getElementById('projectDueDate');
+    const statusInput = document.getElementById('projectStatus');
+    
+    // Set min date for start date to today
+    const today = new Date().toISOString().split('T')[0];
+    startDateInput.min = today;
+    
+    // Set min date for due date to start date
+    startDateInput.addEventListener('change', () => {
+        dueDateInput.min = startDateInput.value;
+        if (dueDateInput.value && dueDateInput.value < startDateInput.value) {
+            dueDateInput.value = startDateInput.value;
+        }
+    });
+    
+    // Form submission handler
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        
+        // Reset validation state
+        form.classList.remove('was-validated');
+        
+        // Validate form
+        if (!form.checkValidity()) {
+            event.stopPropagation();
+            form.classList.add('was-validated');
+            return;
+        }
+        
+        try {
+            // Disable submit button
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
+            
+            // Submit the form
+            form.submit();
+        } catch (error) {
+            console.error('Form submission error:', error);
+            alert('Error creating project. Please try again.');
+            
+            // Re-enable submit button
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-plus me-2"></i>Create Project';
+        }
+    });
+})();
+</script>
+
+<!-- Custom CSS for Dashboard -->
+<style>
+.stats-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.progress {
+    background-color: #e9ecef;
+    border-radius: 10px;
+}
+
+.progress-bar {
+    background-color: #4f46e5;
+    border-radius: 10px;
+}
+
+.table > :not(caption) > * > * {
+    padding: 1rem;
+}
+
+.btn-group .btn {
+    padding: 0.25rem 0.5rem;
+}
+
+.badge {
+    padding: 0.5em 0.75em;
+    font-weight: 500;
+}
+
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+</style> 
