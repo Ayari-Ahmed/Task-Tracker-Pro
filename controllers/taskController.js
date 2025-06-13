@@ -303,10 +303,7 @@ exports.updateTask = async (req, res) => {
       runValidators: true
     });
     
-    res.status(200).json({
-      success: true,
-      data: task
-    });
+    res.redirect(`/tasks/${req.params.id}`);
   } catch (error) {
     console.error('Update task error:', error);
     res.status(500).json({

@@ -50,18 +50,20 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Priority</label>
                                 <select class="form-select" name="priority" required>
-                                    <option value="Low" <%= task.priority === 'Low' ? 'selected' : '' %>>Low</option>
-                                    <option value="Medium" <%= task.priority === 'Medium' ? 'selected' : '' %>>Medium</option>
-                                    <option value="High" <%= task.priority === 'High' ? 'selected' : '' %>>High</option>
+<option value="low" <%= task.priority === 'low' ? 'selected' : '' %>>Low</option>
+<option value="medium" <%= task.priority === 'medium' ? 'selected' : '' %>>Medium</option>
+<option value="high" <%= task.priority === 'high' ? 'selected' : '' %>>High</option>
+<option value="urgent" <%= task.priority === 'urgent' ? 'selected' : '' %>>Urgent</option>
                                 </select>
                             </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Status</label>
                             <select class="form-select" name="status" required>
-                                <option value="To Do" <%= task.status === 'To Do' ? 'selected' : '' %>>To Do</option>
-                                <option value="In Progress" <%= task.status === 'In Progress' ? 'selected' : '' %>>In Progress</option>
-                                <option value="Done" <%= task.status === 'Done' ? 'selected' : '' %>>Done</option>
+<option value="to_do" <%= task.status === 'to_do' ? 'selected' : '' %>>To Do</option>
+<option value="in_progress" <%= task.status === 'in_progress' ? 'selected' : '' %>>In Progress</option>
+<option value="review" <%= task.status === 'review' ? 'selected' : '' %>>Review</option>
+<option value="completed" <%= task.status === 'completed' ? 'selected' : '' %>>Done</option>
                             </select>
                         </div>
                     </div>
@@ -78,4 +80,4 @@
 <!-- No modals needed on this page currently -->
 
 <%- contentFor('scripts') %>
-<script src="/js/main.js"></script> 
+<script src="/js/main.js"></script>

@@ -14,39 +14,42 @@ exports.getProjects = async (req, res) => {
 
     // Admin can see all projects
     if (role === ROLES.ADMIN) {
-      projects = await Project.find()
-        .populate('manager', 'name email')
-        .populate('team', 'name email');
-    } 
+      projects = await Project.find().populate('manager', 'name email').populate('team', 'name email');
+    }
     // Project managers see their managed projects
     else if (role === ROLES.PROJECT_MANAGER) {
-      projects = await Project.find({ manager: id })
-        .populate('manager', 'name email')
-        .populate('team', 'name email');
-    } 
+      projects = await Project.find({ manager: id }).populate('manager', 'name email').populate('team', 'name email');
+    }
     // Team members see projects they're part of
     else {
-      projects = await Project.find({
-        $or: [
-          { manager: id },
-          { team: { $in: [id] } }
-        ]
-      })
-        .populate('manager', 'name email')
-        .populate('team', 'name email');
+      projects = await Project.find({ $or: [{ manager: id }, { team: { $in: [id] } }] }).populate('manager', 'name email').populate('team', 'name email');
     }
+
+    // Calculate progress for each project
+    const projectsWithProgress = await Promise.all(
+      projects.map(async (project) => {
+        const tasks = await Task.find({ project: project._id });
+        const totalTasks = tasks.length;
+        const completedTasks = tasks.filter((task) => task.status === 'completed').length;
+        const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+        return {
+          ...project.toObject(),
+          progress: progress,
+        };
+      })
+    );
 
     res.status(200).json({
       success: true,
-      count: projects.length,
-      data: projects
+      count: projectsWithProgress.length,
+      data: projectsWithProgress,
     });
   } catch (error) {
     console.error('Get projects error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error while fetching projects',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -75,6 +78,13 @@ exports.getProject = async (req, res) => {
         message: 'Project not found'
       });
     }
+
+    // Calculate project progress
+    const totalTasks = project.tasks.length;
+    const completedTasks = project.tasks.filter(task => task.status === 'completed').length;
+    const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+    project.progress = progress;
 
     res.status(200).json({
       success: true,

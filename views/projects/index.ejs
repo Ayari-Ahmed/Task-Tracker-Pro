@@ -123,8 +123,8 @@
                     <% const dueDate = new Date(project.dueDate); %>
                     <% const today = new Date(); %>
                     <% const isOverdue = dueDate < today && project.status !== 'completed'; %>
-                    <span class="<%= isOverdue ? 'text-danger' : '' %>">
-                      <%= dueDate.toLocaleDateString() %>
+                    <span class="<% if (isOverdue) { %>text-danger<% } %>">
+                      <%= !isNaN(dueDate) ? dueDate.toLocaleDateString() : 'Invalid Date' %>
                       <% if (isOverdue) { %>
                         <i class="fas fa-exclamation-circle ms-1" title="Overdue"></i>
                       <% } %>
@@ -363,4 +363,4 @@ document.getElementById('initializeProjectsFiltersBtn').addEventListener('click'
         }
     });
 })();
-</script> 
+</script>
