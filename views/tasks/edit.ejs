@@ -1,0 +1,81 @@
+<%- contentFor('headerButtons') %>
+<a href="/tasks" class="btn btn-secondary d-none d-md-inline-block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l14 0" /><path d="M5 12l6 6" /><path d="M5 12l6 -6" /></svg>
+    Back to Tasks
+</a>
+
+<%- contentFor('body') %>
+<div class="page-body">
+    <div class="container-xl">
+        <div class="row row-cards">
+            <div class="col-12">
+                <form class="card" method="POST" action="/api/tasks/<%= task._id %>?_method=PUT">
+                    <div class="card-header">
+                        <h3 class="card-title">Edit Task: <%= task.name %></h3>
+                    </div>
+                    <div class="card-body">
+                        <%- include('../partials/flashMessages') %>
+
+                        <div class="mb-3">
+                            <label class="form-label">Task Name</label>
+                            <input type="text" class="form-control" name="name" value="<%= task.name %>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="3"><%= task.description %></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Project</label>
+                            <select class="form-select" name="project" required>
+                                <option value="">Select Project</option>
+                                <% projects.forEach(project => { %>
+                                    <option value="<%= project._id %>" <%= task.project && task.project.equals(project._id) ? 'selected' : '' %>><%= project.name %></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Assigned To</label>
+                            <select class="form-select" name="assignedTo">
+                                <option value="">Unassigned</option>
+                                <% users.forEach(user => { %>
+                                    <option value="<%= user._id %>" <%= task.assignedTo && task.assignedTo.equals(user._id) ? 'selected' : '' %>><%= user.username %></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Due Date</label>
+                                <input type="date" class="form-control" name="dueDate" value="<%= task.dueDate ? task.dueDate.toISOString().substring(0,10) : '' %>">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Priority</label>
+                                <select class="form-select" name="priority" required>
+                                    <option value="Low" <%= task.priority === 'Low' ? 'selected' : '' %>>Low</option>
+                                    <option value="Medium" <%= task.priority === 'Medium' ? 'selected' : '' %>>Medium</option>
+                                    <option value="High" <%= task.priority === 'High' ? 'selected' : '' %>>High</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status" required>
+                                <option value="To Do" <%= task.status === 'To Do' ? 'selected' : '' %>>To Do</option>
+                                <option value="In Progress" <%= task.status === 'In Progress' ? 'selected' : '' %>>In Progress</option>
+                                <option value="Done" <%= task.status === 'Done' ? 'selected' : '' %>>Done</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-footer text-end">
+                        <button type="submit" class="btn btn-primary">Update Task</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- contentFor('modals') %>
+<!-- No modals needed on this page currently -->
+
+<%- contentFor('scripts') %>
+<script src="/js/main.js"></script> 

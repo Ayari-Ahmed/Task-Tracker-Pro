@@ -849,17 +849,32 @@ router.get('/tasks/:id/edit', isAuthenticated, async (req, res) => {
       return res.redirect(`/tasks/${task._id}`);
     }
     
-    // Get team members for assignment dropdown
-    const teamMembers = [
-      ...await User.find({ _id: project.manager }),
-      ...await User.find({ _id: { $in: project.team } })
-    ];
+    // Get all projects the user has access to
+    let projects = [];
+    if (user.role === ROLES.ADMIN) {
+        projects = await Project.find().sort({ name: 1 });
+    } else if (user.role === ROLES.PROJECT_MANAGER) {
+        projects = await Project.find({ manager: user._id }).sort({ name: 1 });
+    } else { // Team member
+        projects = await Project.find({
+            $or: [
+                { manager: user._id },
+                { team: { $in: [user._id] } }
+            ]
+        }).sort({ name: 1 });
+    }
+
+    // Get all users for assignment dropdown
+    const users = await User.find({ role: { $in: [ROLES.PROJECT_MANAGER, ROLES.TEAM_MEMBER, ROLES.ADMIN] } }).sort({ username: 1 });
     
     res.render('tasks/edit', {
-      title: `Edit ${task.title} - Task Tracker Pro`,
+      title: `Edit ${task.name} - Task Tracker Pro`,
+      layout: 'layouts/dashboard',
+      path: `/tasks/${task._id}/edit`,
+      user: req.user,
       task,
-      project,
-      teamMembers,
+      projects, // Pass all accessible projects
+      users, // Pass all users
       taskStatus: TASK_STATUS
     });
   } catch (error) {
